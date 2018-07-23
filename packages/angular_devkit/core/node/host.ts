@@ -308,7 +308,7 @@ export class NodeJsSyncHost implements virtualFs.Host<fs.Stats> {
     });
   }
 
-  list(path: Path): Observable<PathFragment[]> {
+  list(path: Path, recursive?: boolean): Observable<PathFragment[]> {
     return new Observable(obs => {
       // TODO: remove this try+catch when issue https://github.com/ReactiveX/rxjs/issues/3740 is
       // fixed.
@@ -336,12 +336,10 @@ export class NodeJsSyncHost implements virtualFs.Host<fs.Stats> {
   }
 
   isDirectory(path: Path): Observable<boolean> {
-    // tslint:disable-next-line:non-null-operator
-    return this.stat(path) !.pipe(map(stat => stat.isDirectory()));
+    return this.stat(path).pipe(map(stat => stat.isDirectory()));
   }
   isFile(path: Path): Observable<boolean> {
-    // tslint:disable-next-line:non-null-operator
-    return this.stat(path) !.pipe(map(stat => stat.isFile()));
+    return this.stat(path).pipe(map(stat => stat.isFile()));
   }
 
   // Some hosts may not support stat.

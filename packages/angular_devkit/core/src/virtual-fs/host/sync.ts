@@ -77,8 +77,8 @@ export class SyncDelegateHost<T extends object = {}> {
     return this._doSyncCall(this._delegate.rename(from, to));
   }
 
-  list(path: Path): PathFragment[] {
-    return this._doSyncCall(this._delegate.list(path));
+  list(path: Path, recursive?: boolean): PathFragment[] {
+    return this._doSyncCall(this._delegate.list(path, recursive));
   }
 
   exists(path: Path): boolean {

@@ -52,7 +52,7 @@ export interface ReadonlyHost<StatsT extends object = {}> {
 
   read(path: Path): Observable<FileBuffer>;
 
-  list(path: Path): Observable<PathFragment[]>;
+  list(path: Path, recursive?: boolean): Observable<PathFragment[]>;
 
   exists(path: Path): Observable<boolean>;
   isDirectory(path: Path): Observable<boolean>;

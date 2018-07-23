@@ -25,8 +25,8 @@ export class SafeReadonlyHost<StatsT extends object = {}> implements ReadonlyHos
     return this._delegate.read(path);
   }
 
-  list(path: Path): Observable<PathFragment[]> {
-    return this._delegate.list(path).pipe(
+  list(path: Path, recursive?: boolean): Observable<PathFragment[]> {
+    return this._delegate.list(path, recursive).pipe(
       catchError(() => of([])),
     );
   }

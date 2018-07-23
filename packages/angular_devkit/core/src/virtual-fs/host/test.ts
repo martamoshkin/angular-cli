@@ -14,13 +14,17 @@ import { SyncDelegateHost } from './sync';
 
 
 export type TestLogRecord = {
-    kind: 'write' | 'read' | 'delete' | 'list' | 'exists' | 'isDirectory' | 'isFile' | 'stat'
+    kind: 'write' | 'read' | 'delete' | 'exists' | 'isDirectory' | 'isFile' | 'stat'
         | 'watch';
     path: Path;
   } | {
     kind: 'rename';
     from: Path;
     to: Path;
+  } | {
+    kind: 'list';
+    path: Path;
+    recursive?: boolean;
   };
 
 
@@ -96,10 +100,10 @@ export class TestHost extends SimpleMemoryHost {
 
     return super._rename(from, to);
   }
-  protected _list(path: Path) {
-    this._records.push({ kind: 'list', path });
+  protected _list(path: Path, recursive?: boolean) {
+    this._records.push({ kind: 'list', path, recursive });
 
-    return super._list(path);
+    return super._list(path, recursive);
   }
   protected _exists(path: Path) {
     this._records.push({ kind: 'exists', path });
@@ -135,8 +139,8 @@ export class TestHost extends SimpleMemoryHost {
     return fileBufferToString(super._read(normalize(path)));
   }
 
-  $list(path: string) {
-    return super._list(normalize(path));
+  $list(path: string, recursive?: boolean) {
+    return super._list(normalize(path), recursive);
   }
 
   $exists(path: string) {

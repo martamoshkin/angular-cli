@@ -38,7 +38,7 @@ export interface SimpleMemoryHostStats {
   readonly content: FileBuffer | null;
 }
 
-export class SimpleMemoryHost implements Host<{}> {
+export class SimpleMemoryHost implements Host {
   protected _cache = new Map<Path, Stats<SimpleMemoryHostStats>>();
   private _watchers = new Map<Path, [HostWatchOptions, Subject<HostWatchEvent>][]>();
 
@@ -236,7 +236,7 @@ export class SimpleMemoryHost implements Host<{}> {
     this._updateWatchers(from, HostWatchEventType.Renamed);
   }
 
-  protected _list(path: Path): PathFragment[] {
+  protected _list(path: Path, recursive?: boolean): PathFragment[] {
     path = this._toAbsolute(path);
     if (this._isFile(path)) {
       throw new PathIsFileException(path);
@@ -247,13 +247,13 @@ export class SimpleMemoryHost implements Host<{}> {
     if (path !== NormalizedRoot) {
       for (const p of this._cache.keys()) {
         if (p.startsWith(path + NormalizedSep)) {
-          result.add(split(p)[fragments.length]);
+          result.add(recursive ? p as PathFragment : split(p)[fragments.length]);
         }
       }
     } else {
       for (const p of this._cache.keys()) {
         if (p.startsWith(NormalizedSep) && p !== NormalizedRoot) {
-          result.add(split(p)[1]);
+          result.add(recursive ? p as PathFragment : split(p)[1]);
         }
       }
     }
@@ -332,9 +332,9 @@ export class SimpleMemoryHost implements Host<{}> {
     });
   }
 
-  list(path: Path): Observable<PathFragment[]> {
+  list(path: Path, recursive?: boolean): Observable<PathFragment[]> {
     return new Observable<PathFragment[]>(obs => {
-      obs.next(this._list(path));
+      obs.next(this._list(path, recursive));
       obs.complete();
     });
   }

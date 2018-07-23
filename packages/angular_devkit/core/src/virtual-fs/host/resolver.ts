@@ -40,8 +40,8 @@ export abstract class ResolverHost<T extends object> implements Host<T> {
     return this._delegate.rename(this._resolve(from), this._resolve(to));
   }
 
-  list(path: Path): Observable<PathFragment[]> {
-    return this._delegate.list(this._resolve(path));
+  list(path: Path, recursive?: boolean): Observable<PathFragment[]> {
+    return this._delegate.list(this._resolve(path), recursive);
   }
 
   exists(path: Path): Observable<boolean> {

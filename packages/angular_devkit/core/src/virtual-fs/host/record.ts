@@ -334,10 +334,10 @@ export class CordHost extends SimpleMemoryHost {
     );
   }
 
-  list(path: Path): Observable<PathFragment[]> {
+  list(path: Path, recursive?: boolean): Observable<PathFragment[]> {
     return concat(
-      super.list(path),
-      this._back.list(path),
+      super.list(path, recursive),
+      this._back.list(path, recursive),
     ).pipe(
       reduce((list: Set<PathFragment>, curr: PathFragment[]) => {
         curr.forEach(elem => list.add(elem));
