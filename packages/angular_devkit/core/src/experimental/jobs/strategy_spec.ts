@@ -5,11 +5,14 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
+import { promisify } from 'util';
 import { JobState } from './api';
 import { createJobHandler } from './create-job-handler';
 import { SimpleJobRegistry } from './simple-registry';
 import { SimpleScheduler } from './simple-scheduler';
 import { strategy } from './strategy';
+
+const flush = promisify(setImmediate);
 
 describe('strategy.serialize()', () => {
   let registry: SimpleJobRegistry;
@@ -45,9 +48,11 @@ describe('strategy.serialize()', () => {
     expect(finished).toBe(0);
 
     job1.output.subscribe();
+    await flush();
     expect(started).toBe(1);
 
     job2.output.subscribe();
+    await flush();
     expect(started).toBe(1);  // Job2 starts when Job1 ends.
 
     expect(finished).toBe(0);
@@ -108,9 +113,11 @@ describe('strategy.serialize()', () => {
     expect(finished).toBe(0);
 
     job1.output.subscribe();
+    await flush();
     expect(started).toBe(1);
 
     job2.output.subscribe();
+    await flush();
     expect(started).toBe(1);  // Job2 starts when Job1 ends.
 
     expect(finished).toBe(0);
@@ -165,6 +172,7 @@ describe('strategy.reuse()', () => {
     expect(finished).toBe(0);
 
     job1.output.subscribe();
+    await flush();
     expect(started).toBe(1);
     expect(finished).toBe(0);
 
@@ -182,6 +190,7 @@ describe('strategy.reuse()', () => {
     const job3 = scheduler.schedule('add', [1, 2, 3, 4, 5]);
     const job4 = scheduler.schedule('add', []);
     job3.output.subscribe();
+    await flush();
     expect(started).toBe(2);
     expect(finished).toBe(1);
 
@@ -234,6 +243,7 @@ describe('strategy.memoize()', () => {
     expect(finished).toBe(0);
 
     job1.output.subscribe();
+    await flush();
     expect(started).toBe(1);
     expect(finished).toBe(0);
 
@@ -242,6 +252,7 @@ describe('strategy.memoize()', () => {
     expect(finished).toBe(0);
 
     job3.output.subscribe();
+    await flush();
     expect(started).toBe(2);
     expect(finished).toBe(0);
 
