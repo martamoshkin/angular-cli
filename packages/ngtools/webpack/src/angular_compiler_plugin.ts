@@ -171,29 +171,33 @@ export class AngularCompilerPlugin {
     // TS represents paths internally with '/' and expects the tsconfig path to be in this format
     this._tsConfigPath = forwardSlashPath(options.tsConfigPath);
 
-    // Check the base path.
-    const maybeBasePath = path.resolve(process.cwd(), this._tsConfigPath);
-    let basePath = maybeBasePath;
-    if (fs.statSync(maybeBasePath).isFile()) {
-      basePath = path.dirname(basePath);
-    }
-    if (options.basePath !== undefined) {
-      basePath = path.resolve(process.cwd(), options.basePath);
-    }
-
     // Parse the tsconfig contents.
     const config = readConfiguration(this._tsConfigPath);
     if (config.errors && config.errors.length) {
       throw new Error(formatDiagnostics(config.errors));
     }
 
+    if (config.options.basePath !== undefined) {
+      this._basePath = config.options.basePath;
+    } else if (options.basePath !== undefined) {
+      this._basePath = path.resolve(options.basePath);
+    } else {
+      this._basePath = path.resolve(path.dirname(config.project));
+    }
     this._rootNames = config.rootNames;
-    this._compilerOptions = { ...config.options, ...options.compilerOptions };
-    this._basePath = config.options.basePath || basePath || '';
+    this._compilerOptions = {
+      ...config.options,
+      ...options.compilerOptions,
 
-    // Overwrite outDir so we can find generated files next to their .ts origin in compilerHost.
-    this._compilerOptions.outDir = '';
-    this._compilerOptions.suppressOutputPathCheck = true;
+      // Overwrite outDir so we can find generated files next to their .ts origin in compilerHost.
+      outdir: '',
+      suppressOutputPathCheck: true,
+
+      // We want to allow emitting with errors so that imports can be added
+      // to the webpack dependency tree and rebuilds triggered by file edits.
+      noEmitOnError: false,
+    };
+
 
     // Default plugin sourceMap to compiler options setting.
     if (!options.hasOwnProperty('sourceMap')) {
@@ -217,10 +221,6 @@ export class AngularCompilerPlugin {
       this._compilerOptions.mapRoot = undefined;
       this._compilerOptions.sourceRoot = undefined;
     }
-
-    // We want to allow emitting with errors so that imports can be added
-    // to the webpack dependency tree and rebuilds triggered by file edits.
-    this._compilerOptions.noEmitOnError = false;
 
     // Set JIT (no code generation) or AOT mode.
     if (options.skipCodeGeneration !== undefined) {
@@ -254,7 +254,6 @@ export class AngularCompilerPlugin {
     if (options.forkTypeChecker !== undefined) {
       this._forkTypeChecker = options.forkTypeChecker;
     }
-    // this._forkTypeChecker = false;
 
     // Add custom platform transformers.
     if (options.platformTransformers !== undefined) {
