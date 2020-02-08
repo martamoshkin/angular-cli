@@ -213,7 +213,14 @@ async function initialize(
   }
 
   if (options.deleteOutputPath) {
-    deleteOutputDir(context.workspaceRoot, originalOutputPath);
+    // Narrow deletion to locale specific output paths if inlining locales
+    if (!i18n.flatOutput && i18n.inlineLocales.size > 0) {
+      for (const locale of i18n.inlineLocales) {
+        deleteOutputDir(context.workspaceRoot, path.join(originalOutputPath, locale));
+      }
+    } else {
+      deleteOutputDir(context.workspaceRoot, originalOutputPath);
+    }
   }
 
   return { config: transformedConfig || config, projectRoot, projectSourceRoot, i18n };
