@@ -65,6 +65,9 @@ async function initialize(
   ];
 }
 
+/**
+ * @experimental Direct usage of this function is considered experimental.
+ */
 export function execute(
   options: KarmaBuilderOptions,
   context: BuilderContext,

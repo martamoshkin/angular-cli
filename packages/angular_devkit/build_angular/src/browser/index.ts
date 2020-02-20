@@ -219,6 +219,9 @@ async function initialize(
   return { config: transformedConfig || config, projectRoot, projectSourceRoot, i18n };
 }
 
+/**
+ * @experimental Direct usage of this function is considered experimental.
+ */
 // tslint:disable-next-line: no-big-function
 export function buildWebpackBrowser(
   options: BrowserBuilderSchema,

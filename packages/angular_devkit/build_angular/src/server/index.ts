@@ -42,6 +42,9 @@ export type ServerBuilderOutput = json.JsonObject & BuilderOutput & {
 
 export { ServerBuilderOptions };
 
+/**
+ * @experimental Direct usage of this function is considered experimental.
+ */
 export function execute(
   options: ServerBuilderOptions,
   context: BuilderContext,
