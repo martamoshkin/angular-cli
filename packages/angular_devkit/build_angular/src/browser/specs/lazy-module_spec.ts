@@ -60,6 +60,12 @@ describe('Browser Builder lazy modules', () => {
   for (const [name, imports] of cases) {
     describe(`Load children ${name} syntax`, () => {
       it('supports lazy bundle for lazy routes with JIT', async () => {
+        if (name === 'string' && !veEnabled) {
+          pending('Does not apply to Ivy.');
+
+          return;
+        }
+
         host.writeMultipleFiles(lazyModuleFiles);
         host.writeMultipleFiles(imports);
 
@@ -72,6 +78,12 @@ describe('Browser Builder lazy modules', () => {
       });
 
       it('supports lazy bundle for lazy routes with AOT', async () => {
+        if (name === 'string' && !veEnabled) {
+          pending('Does not apply to Ivy.');
+
+          return;
+        }
+
         host.writeMultipleFiles(lazyModuleFiles);
         host.writeMultipleFiles(imports);
         addLazyLoadedModulesInTsConfig(host, lazyModuleFiles);
