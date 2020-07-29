@@ -97,4 +97,6 @@ export interface WebpackConfigOptions<T = BuildOptions> {
   tsConfigPath: string;
   supportES2015: boolean;
   differentialLoadingMode?: boolean;
+  supportES5?: boolean;
+  supportedBrowsers?: readonly string[];
 }

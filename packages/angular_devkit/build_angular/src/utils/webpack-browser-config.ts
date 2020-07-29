@@ -70,7 +70,11 @@ export async function generateWebpackConfig(
   // At the moment, only the browser builder supports differential loading
   // However this config generation is used by multiple builders such as dev-server
   const scriptTarget = tsConfig.options.target || ts.ScriptTarget.ES5;
-  const buildBrowserFeatures = new BuildBrowserFeatures(projectRoot, scriptTarget);
+  const buildBrowserFeatures = new BuildBrowserFeatures(
+    projectRoot,
+    scriptTarget,
+    context.target?.configuration,
+  );
   const differentialLoading =
     context.builder.builderName === 'browser' &&
     !options.watch &&
@@ -97,6 +101,8 @@ export async function generateWebpackConfig(
     tsConfigPath,
     supportES2015,
     differentialLoadingMode: differentialLoading,
+    supportES5: buildBrowserFeatures.isEs5SupportNeeded(),
+    supportedBrowsers: buildBrowserFeatures.supportedBrowsers,
   };
 
   wco.buildOptions.progress = defaultProgress(wco.buildOptions.progress);

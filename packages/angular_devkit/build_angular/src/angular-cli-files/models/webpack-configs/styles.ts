@@ -63,7 +63,7 @@ export function getStylesConfig(wco: WebpackConfigOptions) {
         filename: `[name]${hashFormat.file}.[ext]`,
         emitFile: buildOptions.platform !== 'server',
       }),
-      autoprefixer(),
+      autoprefixer({ overrideBrowserslist: wco.supportedBrowsers }),
     ];
   };
 

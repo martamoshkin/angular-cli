@@ -17,8 +17,9 @@ export class BuildBrowserFeatures {
   constructor(
     private projectRoot: string,
     private scriptTarget: ts.ScriptTarget,
+    environment?: string,
   ) {
-    this.supportedBrowsers = browserslist(undefined, { path: this.projectRoot });
+    this.supportedBrowsers = browserslist(undefined, { path: this.projectRoot, env: environment });
     this._es6TargetOrLater = this.scriptTarget > ts.ScriptTarget.ES5;
   }
 

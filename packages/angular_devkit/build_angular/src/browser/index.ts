@@ -264,7 +264,11 @@ export function buildWebpackBrowser(
     switchMap(({ config, projectRoot, projectSourceRoot, i18n }) => {
       const tsConfig = readTsconfig(options.tsConfig, context.workspaceRoot);
       const target = tsConfig.options.target || ScriptTarget.ES5;
-      const buildBrowserFeatures = new BuildBrowserFeatures(projectRoot, target);
+      const buildBrowserFeatures = new BuildBrowserFeatures(
+        projectRoot,
+        target,
+        context.target?.configuration,
+      );
       const isDifferentialLoadingNeeded = buildBrowserFeatures.isDifferentialLoadingNeeded();
 
       if (target > ScriptTarget.ES2015 && isDifferentialLoadingNeeded) {

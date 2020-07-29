@@ -123,4 +123,29 @@ describe('BuildBrowserFeatures', () => {
       expect(buildBrowserFeatures.isFeatureSupported('es6-module')).toBe(true);
     });
   });
+
+  it('supports specifying an environment', () => {
+    host.writeMultipleFiles({
+      '.browserslistrc': `
+      [only-ie]
+      IE 11
+      [only-chrome]
+      Chrome 75
+      `,
+    });
+
+    let buildBrowserFeatures = new BuildBrowserFeatures(
+      workspaceRootSysPath,
+      ScriptTarget.ES2015,
+      'only-chrome'
+    );
+    expect(buildBrowserFeatures.supportedBrowsers).toEqual(['chrome 75']);
+
+    buildBrowserFeatures = new BuildBrowserFeatures(
+      workspaceRootSysPath,
+      ScriptTarget.ES2015,
+      'only-ie'
+    );
+    expect(buildBrowserFeatures.supportedBrowsers).toEqual(['ie 11']);
+  });
 });

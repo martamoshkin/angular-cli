@@ -198,7 +198,11 @@ export function serveWebpackBrowser(
         const { scripts = [], styles = [], baseHref, tsConfig } = browserOptions;
         const { options: compilerOptions } = readTsconfig(tsConfig, context.workspaceRoot);
         const target = compilerOptions.target || ts.ScriptTarget.ES5;
-        const buildBrowserFeatures = new BuildBrowserFeatures(projectRoot, target);
+        const buildBrowserFeatures = new BuildBrowserFeatures(
+          projectRoot,
+          target,
+          context.target?.configuration,
+        );
 
         const entrypoints = generateEntryPoints({ scripts, styles });
         const moduleEntrypoints = buildBrowserFeatures.isDifferentialLoadingNeeded()
