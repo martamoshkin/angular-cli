@@ -6,25 +6,13 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-
 import { isAbsolute } from 'path';
-import { Compiler, compilation } from 'webpack';
+import { Compiler, Dependency, NormalModule } from 'webpack';
 import { addWarning } from '../../utils/webpack-diagnostics';
 
 // Webpack doesn't export these so the deep imports can potentially break.
 const CommonJsRequireDependency = require('webpack/lib/dependencies/CommonJsRequireDependency');
 const AMDDefineDependency = require('webpack/lib/dependencies/AMDDefineDependency');
-
-// The below is extended because there are not in the typings
-interface WebpackModule extends compilation.Module {
-  name?: string;
-  rawRequest?: string;
-  dependencies: WebpackModule[];
-  issuer: WebpackModule | null;
-  module: WebpackModule | null;
-  userRequest?: string;
-  request: string;
-}
 
 export interface CommonJsUsageWarnPluginOptions {
   /** A list of CommonJS packages that are allowed to be used without a warning. */
@@ -46,7 +34,7 @@ export class CommonJsUsageWarnPlugin {
   apply(compiler: Compiler) {
     compiler.hooks.compilation.tap('CommonJsUsageWarnPlugin', compilation => {
       compilation.hooks.finishModules.tap('CommonJsUsageWarnPlugin', modules => {
-        for (const { dependencies, rawRequest, issuer } of modules as unknown as WebpackModule[]) {
+        for (const { dependencies, rawRequest, issuer } of modules as Iterable<NormalModule>) {
           if (
             !rawRequest ||
             rawRequest.startsWith('.') ||
@@ -80,11 +68,15 @@ export class CommonJsUsageWarnPlugin {
               mainIssuer = mainIssuer.issuer;
             }
 
+            const issuerUserRequest =
+              (issuer instanceof NormalModule && issuer.userRequest) || 'unknown';
+
             // Only show warnings for modules from main entrypoint.
             // And if the issuer request is not from 'webpack-dev-server', as 'webpack-dev-server'
             // will require CommonJS libraries for live reloading such as 'sockjs-node'.
-            if (mainIssuer?.name === 'main' && !issuer?.userRequest?.includes('webpack-dev-server')) {
-              const warning = `${issuer?.userRequest} depends on '${rawRequest}'. ` +
+            // tslint:disable-next-line: no-any
+            if ((mainIssuer as any)?.name === 'main' && !issuerUserRequest.includes('webpack-dev-server')) {
+              const warning = `${issuerUserRequest} depends on '${rawRequest}'. ` +
                 'CommonJS or AMD dependencies can cause optimization bailouts.\n' +
                 'For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies';
 
@@ -100,7 +92,7 @@ export class CommonJsUsageWarnPlugin {
     });
   }
 
-  private hasCommonJsDependencies(dependencies: WebpackModule[], checkParentModules = false): boolean {
+  private hasCommonJsDependencies(dependencies: Dependency[], checkParentModules = false): boolean {
     for (const dep of dependencies) {
       if (dep instanceof CommonJsRequireDependency || dep instanceof AMDDefineDependency) {
         return true;

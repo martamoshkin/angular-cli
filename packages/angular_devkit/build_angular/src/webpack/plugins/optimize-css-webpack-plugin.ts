@@ -122,7 +122,9 @@ export class OptimizeCssWebpackPlugin {
             newSource = new RawSource(output.css);
           }
 
-          compilation.assets[file] = newSource;
+          // TODO: Remove any cast once webpack-sources typings have been updated for Webpack 5
+          // tslint:disable-next-line: no-any
+          compilation.assets[file] = newSource as any;
         });
 
       return Promise.all(actions).then(() => {});

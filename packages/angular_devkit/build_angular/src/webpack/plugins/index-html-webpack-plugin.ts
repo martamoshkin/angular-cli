@@ -113,7 +113,9 @@ export class IndexHtmlWebpackPlugin {
       }
 
       // Add to compilation assets
-      compilation.assets[this._options.output] = new RawSource(indexSource);
+      // TODO: remove any cast when webpack-sources types have been updated for Webpack 5
+      // tslint:disable-next-line: no-any
+      compilation.assets[this._options.output] = new RawSource(indexSource) as any;
     });
   }
 }

@@ -310,16 +310,18 @@ export function getCommonConfig(wco: WebpackConfigOptions): Configuration {
         apply(compiler: Compiler) {
           compiler.hooks.emit.tap('angular-cli-stats', compilation => {
             const data = JSON.stringify(compilation.getStats().toJson('verbose'), undefined, 2);
-            compilation.assets['stats.json'] = new RawSource(data);
+            // TODO: remove any cast when webpack-sources types have been updated for Webpack 5
+            // tslint:disable-next-line: no-any
+            compilation.assets['stats.json'] = new RawSource(data) as any;
           });
         }
       })(),
     );
   }
 
-  if (buildOptions.namedChunks) {
-    extraPlugins.push(new NamedLazyChunksPlugin());
-  }
+  // if (buildOptions.namedChunks) {
+  //   extraPlugins.push(new NamedLazyChunksPlugin());
+  // }
 
   if (!differentialLoadingMode) {
     // Budgets are computed after differential builds, not via a plugin.
@@ -493,7 +495,7 @@ export function getCommonConfig(wco: WebpackConfigOptions): Configuration {
     context: root,
     entry: entryPoints,
     output: {
-      futureEmitAssets: true,
+      ecmaVersion: 5,
       path: path.resolve(root, buildOptions.outputPath),
       publicPath: buildOptions.deployUrl,
       filename: `[name]${targetInFileName}${hashFormat.chunk}.js`,
@@ -501,7 +503,7 @@ export function getCommonConfig(wco: WebpackConfigOptions): Configuration {
     watch: buildOptions.watch,
     watchOptions: {
       poll: buildOptions.poll,
-      ignored: buildOptions.poll === undefined ? undefined : /[\\\/]node_modules[\\\/]/,
+      ignored: buildOptions.poll === undefined ? undefined : 'node_modules/**',
     },
     performance: {
       hints: false,
@@ -586,7 +588,7 @@ export function getCommonConfig(wco: WebpackConfigOptions): Configuration {
     },
     optimization: {
       minimizer: extraMinimizers,
-      moduleIds: 'hashed',
+      moduleIds: 'deterministic',
       noEmitOnErrors: true,
     },
     plugins: [
