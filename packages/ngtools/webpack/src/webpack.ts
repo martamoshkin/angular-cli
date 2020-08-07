@@ -5,7 +5,8 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import { InputFileSystem } from 'webpack';
+type WebpackInputFileSystem = import('webpack').Compiler['inputFileSystem'];
+type WebpackWatchFileSystem = import('webpack').Compiler['watchFileSystem'];
 
 // Declarations for (some) Webpack types. Only what's needed.
 
@@ -16,11 +17,7 @@ export interface NormalModuleFactoryRequest {
   typescriptPathMapped?: boolean;
 }
 
-export interface NodeWatchFileSystemInterface {
-  inputFileSystem: InputFileSystem;
-  new(inputFileSystem: InputFileSystem): NodeWatchFileSystemInterface;
-  // tslint:disable-next-line:no-any
-  watch(files: any, dirs: any, missing: any, startTime: any, options: any, callback: any,
-        // tslint:disable-next-line:no-any
-        callbackUndelayed: any): any;
+export interface NodeWatchFileSystemInterface extends WebpackWatchFileSystem {
+  inputFileSystem: WebpackInputFileSystem;
+  new (inputFileSystem: WebpackInputFileSystem): NodeWatchFileSystemInterface;
 }

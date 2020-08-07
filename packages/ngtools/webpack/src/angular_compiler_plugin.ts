@@ -34,7 +34,7 @@ import { ChildProcess, ForkOptions, fork } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ts from 'typescript';
-import { Compiler, compilation } from 'webpack';
+import { Compiler, NormalModule, compilation, InputFileSystem } from 'webpack';
 import { time, timeEnd } from './benchmark';
 import { WebpackCompilerHost } from './compiler_host';
 import { DiagnosticMode, gatherDiagnostics, hasErrors, reportDiagnostics } from './diagnostics';
@@ -75,10 +75,8 @@ import {
   VirtualFileSystemDecorator,
   VirtualWatchFileSystemDecorator,
 } from './virtual_file_system_decorator';
-import {
-  NodeWatchFileSystemInterface,
-  NormalModuleFactoryRequest,
-} from './webpack';
+import { NodeWatchFileSystemInterface, NormalModuleFactoryRequest } from './webpack';
+import { addError, addWarning } from './webpack-diagnostics';
 import { createWebpackInputHost } from './webpack-input-host';
 
 export class AngularCompilerPlugin {
@@ -674,12 +672,12 @@ export class AngularCompilerPlugin {
     };
 
     // Go over all the modules in the webpack compilation and remove them from the sets.
-    compilation.modules.forEach(m => m.resource ? removeSourceFile(m.resource, true) : null);
+    compilation.modules.forEach(m => m instanceof NormalModule && removeSourceFile(m.resource, true));
 
     // Anything that remains is unused, because it wasn't referenced directly or transitively
     // on the files in the compilation.
     for (const fileName of unusedSourceFileNames) {
-      compilation.warnings.push(
+      addWarning(compilation,
         `${fileName} is part of the TypeScript compilation but it's unused.\n` +
         `Add only entry points to the 'files' or 'include' properties in your tsconfig.`,
       );
@@ -741,7 +739,7 @@ export class AngularCompilerPlugin {
       };
 
       let host: virtualFs.Host<fs.Stats> = this._options.host || createWebpackInputHost(
-        compilerWithFileSystems.inputFileSystem,
+        compilerWithFileSystems.inputFileSystem as InputFileSystem,
       );
 
       let replacements: Map<Path, Path> | ((path: Path) => Path) | undefined;
@@ -824,7 +822,7 @@ export class AngularCompilerPlugin {
       }
 
       const inputDecorator = new VirtualFileSystemDecorator(
-        compilerWithFileSystems.inputFileSystem,
+        compilerWithFileSystems.inputFileSystem as InputFileSystem,
         this._compilerHost,
       );
       compilerWithFileSystems.inputFileSystem = inputDecorator;
@@ -953,7 +951,7 @@ export class AngularCompilerPlugin {
         // when the issuer is a `.ts` or `.ngfactory.js` file.
         nmf.hooks.beforeResolve.tapPromise(
           'angular-compiler',
-          async (request?: NormalModuleFactoryRequest) => {
+          async (request) => {
             if (this.done && request) {
               const name = request.request;
               const issuer = request.contextInfo.issuer;
@@ -964,8 +962,6 @@ export class AngularCompilerPlugin {
                 } catch { }
               }
             }
-
-            return request;
           },
         );
       });
@@ -1018,8 +1014,8 @@ export class AngularCompilerPlugin {
   }
 
   private pushCompilationErrors(compilation: compilation.Compilation) {
-    compilation.errors.push(...this._errors);
-    compilation.warnings.push(...this._warnings);
+    this._errors.forEach((error) => addError(compilation, error.toString()));
+    this._warnings.forEach((warning) => addWarning(compilation, warning.toString()));
     this._errors = [];
     this._warnings = [];
   }

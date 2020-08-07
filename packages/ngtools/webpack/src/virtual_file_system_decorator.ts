@@ -60,7 +60,7 @@ export class VirtualFileSystemDecorator implements InputFileSystem {
     (this._inputFileSystem as any).readJson(path, callback);
   }
 
-  readlink(path: string, callback: (err: Error | null | undefined, linkString: string) => void): void {
+  readlink(path: string, callback: (err: Error, linkString: string | Buffer) => void): void {
     this._inputFileSystem.readlink(path, callback);
   }
 
@@ -145,12 +145,13 @@ export class VirtualWatchFileSystemDecorator extends NodeWatchFileSystem {
     };
 
     const newCallback: Parameters<NodeWatchFileSystemInterface['watch']>[5] = (
-      err: Error | null,
-      filesModified: string[],
-      contextModified: string[],
-      missingModified: string[],
-      fileTimestamps: Map<string, number>,
-      contextTimestamps: Map<string, number>,
+      err: Error,
+      // tslint:disable-next-line: no-any
+      fileTimeInfoEntries: Map<string, any>,
+      // tslint:disable-next-line: no-any
+      contextTimeInfoEntries: Map<string, any>,
+      missing: Set<string>,
+      removals: Set<string>,
     ) => {
       // Update fileTimestamps with timestamps from virtual files.
       const virtualFilesStats = this._virtualInputFileSystem.getVirtualFilesPaths()
@@ -158,14 +159,13 @@ export class VirtualWatchFileSystemDecorator extends NodeWatchFileSystem {
           path: fileName,
           mtime: +this._virtualInputFileSystem.statSync(fileName).mtime,
         }));
-      virtualFilesStats.forEach(stats => fileTimestamps.set(stats.path, +stats.mtime));
+      virtualFilesStats.forEach(stats => fileTimeInfoEntries.set(stats.path, +stats.mtime));
       callback(
         err,
-        filesModified.map(value => reverseReplacements.get(value) || value),
-        contextModified.map(value => reverseReplacements.get(value) || value),
-        missingModified.map(value => reverseReplacements.get(value) || value),
-        reverseTimestamps(fileTimestamps),
-        reverseTimestamps(contextTimestamps),
+        reverseTimestamps(fileTimeInfoEntries),
+        reverseTimestamps(contextTimeInfoEntries),
+        new Set([...missing].map(value => reverseReplacements.get(value) || value)),
+        new Set([...removals].map(value => reverseReplacements.get(value) || value)),
       );
     };
 
@@ -210,8 +210,8 @@ export class VirtualWatchFileSystemDecorator extends NodeWatchFileSystem {
     return {
       close: () => watcher.close(),
       pause: () => watcher.pause(),
-      getFileTimestamps: () => reverseTimestamps(watcher.getFileTimestamps()),
-      getContextTimestamps: () => reverseTimestamps(watcher.getContextTimestamps()),
+      getFileTimeInfoEntries: () => reverseTimestamps(watcher.getFileTimeInfoEntries()),
+      getContextTimeInfoEntries: () => reverseTimestamps(watcher.getContextTimeInfoEntries()),
     };
   }
 }
