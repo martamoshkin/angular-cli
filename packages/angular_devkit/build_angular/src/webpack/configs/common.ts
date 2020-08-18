@@ -37,6 +37,7 @@ import {
   shouldBeautify,
 } from '../../utils/environment-options';
 import { findAllNodeModules } from '../../utils/find-up';
+import { isWebpackFiveOrHigher, withWebpackFourOrFive } from '../../utils/webpack-version';
 import {
   BundleBudgetPlugin,
   DedupeModuleResolvePlugin,
@@ -319,9 +320,9 @@ export function getCommonConfig(wco: WebpackConfigOptions): Configuration {
     );
   }
 
-  // if (buildOptions.namedChunks) {
-  //   extraPlugins.push(new NamedLazyChunksPlugin());
-  // }
+  if (buildOptions.namedChunks && !isWebpackFiveOrHigher()) {
+    extraPlugins.push(new NamedLazyChunksPlugin());
+  }
 
   if (!differentialLoadingMode) {
     // Budgets are computed after differential builds, not via a plugin.
@@ -477,9 +478,7 @@ export function getCommonConfig(wco: WebpackConfigOptions): Configuration {
       extensions: ['.ts', '.tsx', '.mjs', '.js'],
       symlinks: !buildOptions.preserveSymlinks,
       modules: [wco.tsConfig.options.baseUrl || projectRoot, 'node_modules'],
-      plugins: [
-        PnpWebpackPlugin,
-      ],
+      plugins: isWebpackFiveOrHigher() ? [] : [PnpWebpackPlugin],
     },
     resolveLoader: {
       symlinks: !buildOptions.preserveSymlinks,
@@ -490,12 +489,12 @@ export function getCommonConfig(wco: WebpackConfigOptions): Configuration {
         'node_modules',
         ...findAllNodeModules(__dirname, projectRoot),
       ],
-      plugins: [PnpWebpackPlugin.moduleLoader(module)],
+      plugins: isWebpackFiveOrHigher() ? [] : [PnpWebpackPlugin.moduleLoader(module)],
     },
     context: root,
     entry: entryPoints,
     output: {
-      ecmaVersion: 5,
+      ...withWebpackFourOrFive({ futureEmitAssets: true }, { ecmaVersion: 5 }),
       path: path.resolve(root, buildOptions.outputPath),
       publicPath: buildOptions.deployUrl,
       filename: `[name]${targetInFileName}${hashFormat.chunk}.js`,
@@ -503,7 +502,10 @@ export function getCommonConfig(wco: WebpackConfigOptions): Configuration {
     watch: buildOptions.watch,
     watchOptions: {
       poll: buildOptions.poll,
-      ignored: buildOptions.poll === undefined ? undefined : 'node_modules/**',
+      ignored:
+        buildOptions.poll === undefined
+          ? undefined
+          : withWebpackFourOrFive(/[\\\/]node_modules[\\\/]/, 'node_modules/**'),
     },
     performance: {
       hints: false,
@@ -588,9 +590,12 @@ export function getCommonConfig(wco: WebpackConfigOptions): Configuration {
     },
     optimization: {
       minimizer: extraMinimizers,
-      moduleIds: 'deterministic',
-      noEmitOnErrors: true,
+      moduleIds: withWebpackFourOrFive('hashed', 'deterministic'),
+      ...withWebpackFourOrFive({}, buildOptions.namedChunks ? { chunkIds: 'named' } : {}),
+      ...withWebpackFourOrFive({ noEmitOnErrors: true }, { emitOnErrors: false }),
     },
+    // TODO_WEBPACK_5: Investigate non-working cache in development builds
+    ...withWebpackFourOrFive({}, { cache: false }),
     plugins: [
       // Always replace the context for the System.import in angular/core to prevent warnings.
       // https://github.com/angular/angular/issues/11580
