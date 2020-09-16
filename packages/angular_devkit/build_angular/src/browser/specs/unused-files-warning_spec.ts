@@ -76,10 +76,6 @@ describe('Browser Builder unused files warnings', () => {
 
     const ignoredFiles = {
       'src/file.d.ts': 'export type MyType = number;',
-      'src/file.ngsummary.ts': 'export const hello = 42;',
-      'src/file.ngfactory.ts': 'export const hello = 42;',
-      'src/file.ngstyle.ts': 'export const hello = 42;',
-      'src/file.ng_typecheck__.ts': 'export const hello = 42;',
     };
 
     host.writeMultipleFiles(ignoredFiles);
@@ -90,8 +86,14 @@ describe('Browser Builder unused files warnings', () => {
       `"main.ts", ${Object.keys(ignoredFiles).map(f => `"${f.replace('src/', '')}"`).join(',')}`,
     );
 
+    host.replaceInFile(
+      'src/tsconfig.app.json',
+      '"compilerOptions":',
+      '"angularCompilerOptions": { "strictTemplates": true }, "compilerOptions":',
+    );
+
     const logger = new TestLogger('unused-files-warnings');
-    const run = await architect.scheduleTarget(targetSpec, undefined, { logger });
+    const run = await architect.scheduleTarget(targetSpec, { aot: true }, { logger });
     const output = await run.result as BrowserBuilderOutput;
     expect(output.success).toBe(true);
     expect(logger.includes(warningMessageSuffix)).toBe(false);
